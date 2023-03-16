@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/go-martini/martini"
 )
 
 func sendUnAuthorizedResponse(w http.ResponseWriter) {
@@ -252,10 +254,10 @@ func DeleteUser(params martini.Params, w http.ResponseWriter, r *http.Request) {
 		sendErrorResponse(w, "Failed")
 		return
 	}
-	userId  := params["id"]
+	userId := params["id"]
 
 	_, errQuery := db.Exec("DELETE FROM users WHERE id=?",
-	userid)
+		userid)
 
 	var response UserResponse
 	if errQuery == nil {
@@ -265,7 +267,7 @@ func DeleteUser(params martini.Params, w http.ResponseWriter, r *http.Request) {
 		fmt.Println(errQuery)
 		response.Status = 400
 		response.Message = "Delete Failed"
-	// }
+	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
