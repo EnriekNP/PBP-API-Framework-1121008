@@ -8,4 +8,7 @@ require (
 	github.com/go-sql-driver/mysql v1.7.0
 )
 
-require github.com/codegangsta/inject v0.0.0-20150114235600-33e0aa1cb7c0 // indirect
+require (
+	github.com/codegangsta/inject v0.0.0-20150114235600-33e0aa1cb7c0 // indirect
+	github.com/martini-contrib/cors v0.0.0-20141016003011-553b9208d353 // indirect
+)
