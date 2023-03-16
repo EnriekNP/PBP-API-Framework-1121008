@@ -18,7 +18,7 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
-func generateToken(w http.ResponseWriter, id int, name string, userType int) {
+func GenerateToken(w http.ResponseWriter, id int, name string, userType int) {
 	tokenExpiryTime := time.Now().Add(5 * time.Minute)
 
 	//create claims with user data
@@ -59,21 +59,7 @@ func resetUserToken(w http.ResponseWriter) {
 		HttpOnly: true,
 	})
 }
-// func martiniAuthenticate(accessType int) martini.Handler {
-// 	return func(c martini.Context) {
-// 		w := 
-// 		r := c.Request()
-// 		next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-// 			c.Next()
-// 		})
 
-// 		// call the Authenticate function with the correct arguments
-// 		middleware := Authenticate(next, accessType)
-
-// 		// call the middleware with the current request and response
-// 		middleware.ServeHTTP(w, r)
-// 	}
-// }
 func Authenticate(next http.HandlerFunc, accessType int) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		isValidToken := validateUserToken(r, accessType)

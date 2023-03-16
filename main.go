@@ -9,11 +9,13 @@ import (
 func main() {
 	m := martini.Classic()
 	m.Group("/user", func(r martini.Router) {
-		r.Get("/", controllers.GetAllUsers)
-		r.Post("/", controllers.InserNewUser)
+		r.Get("/", controllers.Authenticate(controllers.GetAllUsers, 1))
+		r.Post("/", controllers.Authenticate(controllers.InserNewUser, 2))
 		r.Put("/:id", controllers.UpdateUser)
 		r.Delete("/:id", controllers.DeleteUser)
 	})
+	//Bisa ada 2 jenis middleware, yang global dan yang local
+	//contoh CORS
 
 	m.Get("/login", controllers.Login)
 	m.Get("/logout", controllers.Logout)
