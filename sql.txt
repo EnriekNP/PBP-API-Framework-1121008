@@ -1,0 +1,10 @@
+CREATE DATABASE Martini;
+CREATE TABLE Users (
+	Id int (11) PRIMARY KEY AUTO_INCREMENT,
+    Name VARCHAR(30),
+    Age int (3) ,
+    Address VARCHAR(30),
+    Email VARCHAR(30),
+    Password VARCHAR(30),
+    UserType tinyint(1)
+);
