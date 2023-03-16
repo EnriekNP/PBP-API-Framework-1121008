@@ -247,18 +247,14 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 func DeleteUser(params martini.Params, w http.ResponseWriter, r *http.Request) {
 	db := Connect()
 	defer db.Close()
-
-	err := r.ParseForm()
-	if err != nil {
-		log.Println(err)
-		sendErrorResponse(w, "Failed")
-		return
-	}
-	userId := params["id"]
-
+	//membaca dari params
+	userid := params["id"]
+	//eksekusi delete
 	_, errQuery := db.Exec("DELETE FROM users WHERE id=?",
 		userid)
-
+	//menghasilkan response
+	//jika tidak ada eror, maka akan ditampilkan status dan pesan sukses
+	// jika ada eror, maka akan diprint erornya dan ditampilkan status dan pesan gagal
 	var response UserResponse
 	if errQuery == nil {
 		response.Status = 200
@@ -268,6 +264,7 @@ func DeleteUser(params martini.Params, w http.ResponseWriter, r *http.Request) {
 		response.Status = 400
 		response.Message = "Delete Failed"
 	}
+	//untuk mereturn response
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
