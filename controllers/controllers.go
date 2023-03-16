@@ -10,6 +10,7 @@ import (
 	"github.com/go-martini/martini"
 )
 
+// fungsi untuk mengirimkan response akses yang tidak diizinkan
 func sendUnAuthorizedResponse(w http.ResponseWriter) {
 	var response ErrorResponse
 	response.Status = 401
@@ -18,6 +19,8 @@ func sendUnAuthorizedResponse(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
+
+// fungsi untuk mengirimkan response error
 func sendErrorResponse(w http.ResponseWriter, message string) {
 	var response ErrorResponse
 	response.Status = 400
@@ -26,37 +29,41 @@ func sendErrorResponse(w http.ResponseWriter, message string) {
 	json.NewEncoder(w).Encode(response)
 }
 
-// function to Login
+// fungsi untuk login
 func Login(w http.ResponseWriter, r *http.Request) {
 	db := Connect()
 	defer db.Close()
-	//Read from header
+	//membaca platform dari header
 	platform := r.Header.Get("platform")
 
-	//Read From Query Param
+	//membaca email dan password dari query param
 	email := r.URL.Query()["Email"]
 	password := r.URL.Query()["Password"]
-
-	query := "SELECT ID,Name,Age,Address,UserType FROM USERS WHERE Email ='" + email[0] + "' && Password='" + password[0] + "'"
+	//eksekusi query
+	query := "SELECT ID,Name,Age,Address,email,password,UserType FROM USERS WHERE Email ='" + email[0] + "' && Password='" + password[0] + "'"
 	rows, err := db.Query(query)
 	if err != nil {
 		log.Println(err)
 		sendErrorResponse(w, "Something went wrong, please try again")
 		return
 	}
-
+	//masukan ke dalam variable user jika ketemu user dengan email dan password yang benar
 	var user User
 	login := false
 	for rows.Next() {
-		if err := rows.Scan(&user.ID, &user.Name, &user.Age, &user.Address, &user.UserType); err != nil {
+		if err := rows.Scan(&user.ID, &user.Name, &user.Age, &user.Address, &user.Email, &user.Password, &user.UserType); err != nil {
 			log.Println(err)
 			sendErrorResponse(w, "Error result scan")
 			return
 		} else {
-			generateToken(w, user.ID, user.Name, user.UserType)
+			//jika ketemu, maka akan mengenerate token dan login menjadi true
+			GenerateToken(w, user.ID, user.Name, user.UserType)
 			login = true
 		}
 	}
+	//kirimkan response dengan mengecek apakah login berhasil
+	//jika berhasil, maka akan mengirimkan data user , status dan pesan berhasil
+	//jika gagal, maka akan mengirimkan status dan pesan gagal
 	var response UserResponse
 	if login {
 		response.Status = 200
@@ -67,14 +74,16 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		response.Status = 400
 		response.Message = "Login Failed"
 	}
+	//mengembalikan response
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
 
-// function to logout
+// fungsi utnuk logout
 func Logout(w http.ResponseWriter, r *http.Request) {
+	//menghilangkan token
 	resetUserToken(w)
-
+	// mengembalikan response sukses
 	var response UserResponse
 	response.Status = 200
 	response.Message = "Success"
@@ -153,7 +162,7 @@ func InserNewUser(w http.ResponseWriter, r *http.Request) {
 	db := Connect()
 	defer db.Close()
 
-	//Read From Request Body
+	//membaca dari Request Body
 	err := r.ParseForm()
 	if err != nil {
 		log.Println(err)
@@ -166,7 +175,7 @@ func InserNewUser(w http.ResponseWriter, r *http.Request) {
 	email := r.Form.Get("email")
 	password := r.Form.Get("password")
 	userType, _ := strconv.Atoi(r.Form.Get("usertype"))
-	//execute the query to insert into database
+	//eksekusi kueri
 	res, errQuery := db.Exec("INSERT INTO users(name,age,address,email,password,UserType)values(?,?,?,?,?,?)",
 		name,
 		age,
@@ -175,9 +184,9 @@ func InserNewUser(w http.ResponseWriter, r *http.Request) {
 		password,
 		userType,
 	)
-	//variable to get Id users
+	//variabel untuk mendapatkan id user
 	id, _ := res.LastInsertId()
-	//add all variable into user struct
+	//menambahkan semua variabel kedalam struct user
 	var user User
 	user.ID = int(id)
 	user.Name = name
@@ -186,8 +195,9 @@ func InserNewUser(w http.ResponseWriter, r *http.Request) {
 	user.Email = email
 	user.Password = password
 	user.UserType = userType
-	//return response , if there are no error then return response with message sucess and data user,
-	//else return response with failed message
+	//megnembalikan respon dengan mengecek apakah ada eror
+	//jika tidak ada error akan mengembalikan data user , status dan pesan sukses
+	//jika ada error maka akan mengembalikan status dan pesan error
 	var response UserResponse
 	if errQuery == nil {
 		response.Status = 200
@@ -198,7 +208,7 @@ func InserNewUser(w http.ResponseWriter, r *http.Request) {
 		response.Status = 400
 		response.Message = "Insert User Failed"
 	}
-	//to make response into json type and return the response
+	//mereturn respon
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
@@ -289,6 +299,7 @@ func UpdateUser(param martini.Params, w http.ResponseWriter, r *http.Request) {
 		response.Status = 200
 		response.Message = "Success"
 		response.Data = userFinal
+		GenerateToken(w, user.ID, user.Name, user.UserType)
 	} else {
 		fmt.Println(errQuery)
 		response.Status = 400
