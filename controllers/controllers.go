@@ -203,42 +203,98 @@ func InserNewUser(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-// function to update user
-func UpdateUser(w http.ResponseWriter, r *http.Request) {
+// fungsi untuk mengupdate user
+func UpdateUser(param martini.Params, w http.ResponseWriter, r *http.Request) {
 	db := Connect()
 	defer db.Close()
 
-	//Read From Request Body
+	//membaca dari request body
 	err := r.ParseForm()
 	if err != nil {
 		log.Println(err)
 		sendErrorResponse(w, "Failed")
 		return
 	}
-	id, _ := strconv.Atoi(r.Form.Get("id"))
+	//membaca id dari param
+	id := param["id"]
+	//mengkueri terlebih dahulu dari database user dengan id ini
+	query := "SELECT name,age,address,email,password,UserType FROM USERS WHERE Id ='" + id + "'"
+	//eksekusi kueri select user
+	rows, err := db.Query(query)
+	if err != nil {
+		log.Println(err)
+		sendErrorResponse(w, "Something went wrong, please try again")
+		return
+	}
+	//memasukan user tersebut ke variable user
+	var user User
+	for rows.Next() {
+		if err := rows.Scan(&user.Name, &user.Age, &user.Address, &user.Email, &user.Password, &user.UserType); err != nil {
+			log.Println(err)
+			sendErrorResponse(w, "Error result scan")
+			return
+		}
+	}
+	//membaca request body
 	name := r.Form.Get("name")
 	age, _ := strconv.Atoi(r.Form.Get("age"))
 	address := r.Form.Get("address")
-	_, errQuery := db.Exec("UPDATE users SET name =?,age = ?,address = ? WHERE ID=?",
+	email := r.Form.Get("email")
+	password := r.Form.Get("password")
+	userType, _ := strconv.Atoi(r.Form.Get("userType"))
+	//mengecek apakah request body yang didapat itu kosong atau tidak
+	//jika kosong maka akan diisi oleh data lama yang telah diambil dari database
+	if name == "" {
+		name = user.Name
+	}
+	if age == 0 {
+		age = user.Age
+	}
+	if address == "" {
+		address = user.Address
+	}
+	if email == "" {
+		email = user.Email
+	}
+	if password == "" {
+		password = user.Password
+	}
+
+	if userType == 0 {
+		userType = user.UserType
+	}
+	//mengeksekusi query update user
+	_, errQuery := db.Exec("UPDATE users SET name =?,age = ?,address = ?,email= ?,password= ?,UserType= ? WHERE ID=?",
 		name,
 		age,
 		address,
+		email,
+		password,
+		userType,
 		id,
 	)
-
+	//menambahkan user akhir yang sudah pasti ke dalam variabel user final
+	var userFinal User
+	userFinal.ID, _ = strconv.Atoi(id)
+	userFinal.Name = name
+	userFinal.Age = age
+	userFinal.Address = address
+	userFinal.Email = email
+	userFinal.Password = password
+	userFinal.UserType = userType
+	//mengecek apakah ada error di query
+	//jika tidak ada maka akan menampilkan data user , pesan dan status sukses
 	var response UserResponse
 	if errQuery == nil {
 		response.Status = 200
 		response.Message = "Success"
-		response.Data.ID = id
-		response.Data.Name = name
-		response.Data.Age = age
-		response.Data.Address = address
+		response.Data = userFinal
 	} else {
 		fmt.Println(errQuery)
 		response.Status = 400
 		response.Message = "Update User Failed"
 	}
+	//mereturn response
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
