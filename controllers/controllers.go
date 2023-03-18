@@ -90,7 +90,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// fungsi utnuk logout
+// fungsi untuk logout
 func Logout(w http.ResponseWriter, r *http.Request) {
 	//menghilangkan token
 	resetUserToken(w)
@@ -98,9 +98,12 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 	var response UserResponse
 	response.Status = 200
 	response.Message = "Success"
-
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	err := json.NewEncoder(w).Encode(response)
+	if err != nil {
+		log.Println(err)
+		fmt.Println(err)
+	}
 }
 
 // fungsi untuk menampilkan semua user
@@ -165,7 +168,11 @@ func GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	response.Status = 200
 	response.Message = "Success"
 	response.Data = users
-	json.NewEncoder(w).Encode(response)
+	err2 := json.NewEncoder(w).Encode(response)
+	if err2 != nil {
+		log.Println(err2)
+		fmt.Println(err2)
+	}
 }
 
 // Insert New User
@@ -221,7 +228,11 @@ func InserNewUser(w http.ResponseWriter, r *http.Request) {
 	}
 	//mereturn respon
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	err2 := json.NewEncoder(w).Encode(response)
+	if err2 != nil {
+		log.Println(err2)
+		fmt.Println(err2)
+	}
 }
 
 // fungsi untuk mengupdate user
@@ -318,7 +329,11 @@ func UpdateUser(param martini.Params, w http.ResponseWriter, r *http.Request) {
 	}
 	//mereturn response
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	err2 := json.NewEncoder(w).Encode(response)
+	if err2 != nil {
+		log.Println(err2)
+		fmt.Println(err2)
+	}
 }
 
 // delete user
@@ -344,5 +359,9 @@ func DeleteUser(params martini.Params, w http.ResponseWriter, r *http.Request) {
 	}
 	//untuk mereturn response
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	err := json.NewEncoder(w).Encode(response)
+	if err != nil {
+		log.Println(err)
+		fmt.Println(err)
+	}
 }
